@@ -44,3 +44,83 @@ class Renderer(object):
             
             self.screen.set_at((x, self.height - 1 - y), color)
             self.framebuffer[y][x] = color
+            
+    def glLine(self,x0, y0, x1, y1): 
+        dx = abs(x1 - x0)
+        dy = abs(y1 - y0)
+        steep = dy > dx 
+        
+        if steep:
+            x0, y0 = y0, x0 
+            x1, y1 = y1, x1
+            dx, dy = dy, dx
+        
+        if x0 > x1:
+            x0, x1 = x1, x0 
+            y0, y1 = y1, y0
+            
+        offset = 0
+        threshold = dx 
+        y = y0
+        y_step = 1 if y0 < y1 else -1
+        
+        for x in range (x0, x1 +1 ): 
+            if steep:
+                self.glPoint(y, x) 
+            else: 
+                self.glPoint(x, y)
+                
+            offset += dy *2 
+            if offset >= threshold: 
+                y += y_step 
+                threshold += dx * 2
+                
+    def glDrawPolygon(self, points):
+        n= len(points)
+        for i in range(n):
+            x0,y0 = points[i]
+            x1,y1 = points[(i+1) % n]
+            self.glLine(x0, y0, x1, y1)
+                
+    def glFillPolygon(self, points): 
+        if len(points) < 3:
+            return
+        
+        min_y = min(y for _, y in points)
+        max_y = max(y for _, y in points)
+        
+        edges = []
+        n = len(points)
+        for i in range (n):
+            x0, y0 = points[i]
+            x1, y1 = points[(i + 1) % n]
+            
+            if y0 == y1:
+                continue
+            
+            if y0 > y1:
+                x0, y0, x1, y1 = x1, y1, x0, y0
+            
+            inv_slope = (x1 - x0) / (y1 - y0) if (y1-y0) != 0 else 0
+            edges.append((y0,y1, x0, inv_slope))
+            
+        for y in range(int(min_y), int(max_y) + 1):
+            intersections = []
+            for edge in edges:
+                
+                y0_edge, y1_edge, x0_edge, inv_slope = edge
+                
+                if y0_edge <= y <= y1_edge:
+                    x_intersection = x0_edge + inv_slope * (y - y0_edge)
+                    intersections.append(x_intersection)
+                    
+            intersections.sort()
+            
+            for i in range(0, len(intersections), 2): 
+                if i + 1 < len(intersections):
+                    x_start = int(round(intersections[i]))
+                    x_end = int(round(intersections[i + 1]))
+                    
+                    for x in range(x_start, x_end + 1):
+                        self.glPoint(x, y)
+            

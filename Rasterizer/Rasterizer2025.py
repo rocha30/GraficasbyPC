@@ -1,83 +1,99 @@
-import pygame 
-from gl import Renderer  
+import pygame
+from gl import *
+from BMP_Writer import GenerateBMP
+from model import Model
+from shaders import *
 
-width = 960 
-height = 540
-pygame.init()
-screen = pygame.display.set_mode((width, height))
-pygame.display.set_caption("Rasterizer 2025 - Polígono")
+width = 256
+height = 256
+
+screen = pygame.display.set_mode((width, height), pygame.SCALED)
 clock = pygame.time.Clock()
 
-# Crear instancia del renderer
-render = Renderer(screen)
+rend = Renderer(screen)
 
-#definir el poligono 
-polygon = [
-    (165, 380), (185, 360), (180, 330), (207, 345),
-    (233, 330), (230, 360), (250, 380), (220, 385),
-    (205, 410), (193, 383)
-]
+# triangle3 = [[510,70], [550, 160], [570,80] ]
 
-polygon_2 = [(321, 335),(288, 286),(339, 251) ,(374, 302)]
+triangleModel = Model()
+triangleModel.vertices = [ 110,  70, 0,
+						   150, 160, 0,
+						   170,  80, 0 ]
 
-polygon_3 = [(377, 249) ,(411, 197) ,(436, 249)]
+triangleModel.vertexShader = vertexShader
 
-
-polygon_4 = [
-    (413, 177), (448, 159), (502, 88), (553, 53), (535, 36), (676, 37), (660, 52),
-    (750, 145), (761, 179), (672, 192), (659, 214), (615, 214), (632, 230), (580, 230),
-    (597, 215), (552, 214), (517, 144), (466, 180)
-]
-
-polygon_5 = [(682, 175), (708, 120), (735, 148), (739, 170)]
+rend.models.append(triangleModel)
 
 
-isRUNNING = True
+isRunning = True
+while isRunning:
 
-while isRUNNING:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            isRUNNING = False
+	deltaTime = clock.tick(60) / 1000.0
 
-    #para limpiar la pantalla
-    render.glClear()
-    
-    #para establecer el color de fondo
-    render.glColor(1,1,0)
-    render.glFillPolygon(polygon)
-    
-    #para dibujar el poligono
-    render.glColor(1, 1, 1)
-    render.glDrawPolygon(polygon)
-    
-    # 2do: dibujar el poligono 2
-    render.glColor(0.5, 0, 0.5)  # Cambiar color a
-    render.glFillPolygon(polygon_2)
-    render.glColor(1, 1, 1)  # Cambiar color a
-    render.glDrawPolygon(polygon_2)
-    
-    # 3ro: dibujar el poligono 3
-    render.glColor(0, 0, 1)  # Cambiar color a
-    render.glFillPolygon(polygon_3)
-    render.glColor(1, 1, 1)  # Cambiar color a
-    render.glDrawPolygon(polygon_3)
-    
-    
-    # 4to: dibujar el poligono 4
-    render.glColor(0.6,0.4, 0.2)  # Cambiar color a verde
-    render.glFillPolygon(polygon_4)
-    render.glColor(1, 1, 1)  # Cambiar color a blanco
-    render.glDrawPolygon(polygon_4)
-    
-    # 5to: dibujar el poligono 5
-    render.glColor(1, 1, 1)  
-    render.glFillPolygon(polygon_5)
-    render.glColor(1, 1, 1) 
-    render.glDrawPolygon(polygon_5)
 
-    
-    pygame.display.flip()
-    clock.tick(60)
-    
+	for event in pygame.event.get():
+		if event.type == pygame.QUIT:
+			isRunning = False
+
+		elif event.type == pygame.KEYDOWN:
+			if event.key == pygame.K_1:
+				rend.primitiveType = POINTS
+
+			elif event.key == pygame.K_2:
+				rend.primitiveType = LINES
+
+			elif event.key == pygame.K_3:
+				rend.primitiveType = TRIANGLES
+
+
+
+	keys = pygame.key.get_pressed()
+
+	if keys[pygame.K_RIGHT]:
+		triangleModel.translation[0] += 10 * deltaTime
+	if keys[pygame.K_LEFT]:
+		triangleModel.translation[0] -= 10 * deltaTime
+	if keys[pygame.K_UP]:
+		triangleModel.translation[1] += 10 * deltaTime
+	if keys[pygame.K_DOWN]:
+		triangleModel.translation[1] -= 10 * deltaTime
+
+
+	if keys[pygame.K_d]:
+		triangleModel.rotation[2] += 20 * deltaTime
+	if keys[pygame.K_a]:
+		triangleModel.rotation[2] -= 20 * deltaTime
+
+	if keys[pygame.K_w]:
+		triangleModel.scale =  [(i + deltaTime) for i in triangleModel.scale]
+	if keys[pygame.K_s]:
+		triangleModel.scale = [(i - deltaTime) for i in triangleModel.scale ]
+
+
+
+
+
+
+
+
+
+
+		rend.glClear()
+
+		# Escribir lo que se va a dibujar aqui
+		rend.glPoint(100,100,(255,0,0))  # ← Corregir indentación aquí
+		rend.glPoint(150,150,(0,255,0))
+	
+		#Dibujar una linea. 
+		rend.glLine([50, 50], [200, 200], (0, 0, 255))  
+		rend.glLine([200, 50], [50, 200], (255, 255, 0)) 
+
+		rend.glRender()
+
+	#########################################
+
+	pygame.display.flip()
+
+
+GenerateBMP("output.bmp", width, height, 3, rend.frameBuffer)
+
 pygame.quit()
-exit(0)

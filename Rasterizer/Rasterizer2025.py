@@ -4,96 +4,75 @@ from BMP_Writer import GenerateBMP
 from model import Model
 from shaders import *
 
-width = 256
-height = 256
+width = 720
+height = 720
 
 screen = pygame.display.set_mode((width, height), pygame.SCALED)
+pygame.display.set_caption("Rasterizer 2025 - Modelo 3D OBJ")
 clock = pygame.time.Clock()
 
 rend = Renderer(screen)
 
-# triangle3 = [[510,70], [550, 160], [570,80] ]
+# Cargar modelo desde archivo .obj
+objModel = Model()
+objModel.load_obj("prueba.obj")
+objModel.scale_to_fit(width, height)  # Escalar automáticamente
+objModel.vertexShader = vertexShader
 
-triangleModel = Model()
-triangleModel.vertices = [ 110,  70, 0,
-						   150, 160, 0,
-						   170,  80, 0 ]
-
-triangleModel.vertexShader = vertexShader
-
-rend.models.append(triangleModel)
-
+rend.models.append(objModel)
 
 isRunning = True
 while isRunning:
+    deltaTime = clock.tick(60)/ 1000.0
 
-	deltaTime = clock.tick(60) / 1000.0
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            isRunning = False
 
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_1:
+                rend.primitiveType = POINTS
+            elif event.key == pygame.K_2:
+                rend.primitiveType = LINES
+            elif event.key == pygame.K_3:
+                rend.primitiveType = TRIANGLES
 
-	for event in pygame.event.get():
-		if event.type == pygame.QUIT:
-			isRunning = False
+    keys = pygame.key.get_pressed()
 
-		elif event.type == pygame.KEYDOWN:
-			if event.key == pygame.K_1:
-				rend.primitiveType = POINTS
+    # Controles de movimiento
+    if keys[pygame.K_RIGHT]:
+        objModel.translation[0] += 50 * deltaTime
+    if keys[pygame.K_LEFT]:
+        objModel.translation[0] -= 50 * deltaTime
+    if keys[pygame.K_UP]:
+        objModel.translation[1] += 50 * deltaTime
+    if keys[pygame.K_DOWN]:
+        objModel.translation[1] -= 50 * deltaTime
 
-			elif event.key == pygame.K_2:
-				rend.primitiveType = LINES
+    # Controles de rotación
+    if keys[pygame.K_d]:
+        objModel.rotation[2] += 45 * deltaTime
+    if keys[pygame.K_a]:
+        objModel.rotation[2] -= 45 * deltaTime
+    if keys[pygame.K_q]:
+        objModel.rotation[1] += 45 * deltaTime
+    if keys[pygame.K_e]:
+        objModel.rotation[1] -= 45 * deltaTime
 
-			elif event.key == pygame.K_3:
-				rend.primitiveType = TRIANGLES
+    # Controles de escala
+    if keys[pygame.K_w]:
+        objModel.scale = [i * (1 + deltaTime) for i in objModel.scale]
+    if keys[pygame.K_s]:
+        objModel.scale = [i * (1 - deltaTime) for i in objModel.scale]
 
+    # Renderizar
+    rend.glClear()
+    rend.glRender()
 
+    pygame.display.flip()
 
-	keys = pygame.key.get_pressed()
-
-	if keys[pygame.K_RIGHT]:
-		triangleModel.translation[0] += 10 * deltaTime
-	if keys[pygame.K_LEFT]:
-		triangleModel.translation[0] -= 10 * deltaTime
-	if keys[pygame.K_UP]:
-		triangleModel.translation[1] += 10 * deltaTime
-	if keys[pygame.K_DOWN]:
-		triangleModel.translation[1] -= 10 * deltaTime
-
-
-	if keys[pygame.K_d]:
-		triangleModel.rotation[2] += 20 * deltaTime
-	if keys[pygame.K_a]:
-		triangleModel.rotation[2] -= 20 * deltaTime
-
-	if keys[pygame.K_w]:
-		triangleModel.scale =  [(i + deltaTime) for i in triangleModel.scale]
-	if keys[pygame.K_s]:
-		triangleModel.scale = [(i - deltaTime) for i in triangleModel.scale ]
-
-
-
-
-
-
-
-
-
-
-		rend.glClear()
-
-		# Escribir lo que se va a dibujar aqui
-		rend.glPoint(100,100,(255,0,0))  # ← Corregir indentación aquí
-		rend.glPoint(150,150,(0,255,0))
-	
-		#Dibujar una linea. 
-		rend.glLine([50, 50], [200, 200], (0, 0, 255))  
-		rend.glLine([200, 50], [50, 200], (255, 255, 0)) 
-
-		rend.glRender()
-
-	#########################################
-
-	pygame.display.flip()
-
-
+# Exportar imagen final
 GenerateBMP("output.bmp", width, height, 3, rend.frameBuffer)
+print("Imagen exportada como output.bmp")
 
 pygame.quit()

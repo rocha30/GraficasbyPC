@@ -390,3 +390,46 @@ class Renderer(object):
                     
                     self.screen.set_at((x, self.height - 1 - y), color)
                     self.frameBuffer[x][y] = color
+                    
+                    
+    def animate_hologram_effect(self, deltaTime):
+        """Animar el efecto de holograma con el tiempo"""
+        if not hasattr(self, 'hologram_time'):
+            self.hologram_time = 0.0
+        
+        self.hologram_time += deltaTime
+        
+        for i, face in enumerate(self.faces):
+            if i < len(self.colors):
+                # Color base que cambia según la cara y el tiempo
+                hue = (i * 0.01 + self.hologram_time * 0.5) % 1.0
+                
+                # Convertir HSV a RGB simple con animación
+                def animated_hsv_to_rgb(h, time_offset):
+                    h = (h + time_offset * 0.1) % 1.0
+                    h = h * 6.0
+                    if h < 1:
+                        return [1.0, h, 0.0]
+                    elif h < 2:
+                        return [2-h, 1.0, 0.0]
+                    elif h < 3:
+                        return [0.0, 1.0, h-2]
+                    elif h < 4:
+                        return [0.0, 4-h, 1.0]
+                    elif h < 5:
+                        return [h-4, 0.0, 1.0]
+                    else:
+                        return [1.0, 0.0, 6-h]
+                
+                base_color = animated_hsv_to_rgb(hue, self.hologram_time)
+                
+                # Agregar brillo y transparencia animada
+                brightness = 0.5 + 0.3 * math.sin(self.hologram_time * 2 + i * 0.1)
+                
+                self.colors[i] = [
+                    base_color[0] * brightness,
+                    base_color[1] * brightness,
+                    base_color[2] * brightness
+                ]
+        
+        print(f"Holograma animado: tiempo={self.hologram_time:.2f}")

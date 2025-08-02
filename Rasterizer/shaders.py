@@ -1,19 +1,17 @@
 import numpy as np
 
 def vertexShader(vertex, **kwargs):
-    # Se lleva a cabo por vertice
+    
 
-    # Recibimos las matrices
     modelMatrix = kwargs.get("modelMatrix")
     viewMatrix = kwargs.get("viewMatrix") 
     projectionMatrix = kwargs.get("projectionMatrix")
     viewportMatrix = kwargs.get("viewportMatrix")
 
-    # Agregamos un componente W al vertice como numpy array
+    
     vt = np.array([vertex[0], vertex[1], vertex[2], 1]).reshape(4, 1)
 
-    # Transformamos el vertices por todas las matrices en el orden correcto
-    # Orden: Model -> View -> Projection -> Viewport
+
     if modelMatrix is not None:
         vt = modelMatrix @ vt
     
@@ -195,3 +193,101 @@ def simpleVertexShader(vertex, **kwargs):
     z = max(-1000, min(1000, z))
     
     return [x, y, z]
+
+def hologramShader(vertex, **kwargs):
+    """Vertex shader para efecto de holograma"""
+    # Usar el vertex shader básico para transformaciones
+    transformed_vertex = vertexShader(vertex, **kwargs)
+    
+    # Agregar ligera distorsión holográfica
+    import time
+    time_factor = time.time() * 2  # Velocidad de animación
+    
+    # Distorsión sutil basada en posición y tiempo
+    noise_x = 0.5 * np.sin(vertex[1] * 0.1 + time_factor)
+    noise_y = 0.3 * np.cos(vertex[0] * 0.1 + time_factor * 1.2)
+    
+    transformed_vertex[0] += noise_x
+    transformed_vertex[1] += noise_y
+    
+    return transformed_vertex
+
+def hologramFragmentShader(vertex_a, vertex_b, vertex_c, u, v, w, **kwargs):
+    """Fragment shader para efecto de holograma"""
+    import time
+    import math
+    
+    # Calcular posición del fragmento
+    frag_pos = [
+        u * vertex_a[0] + v * vertex_b[0] + w * vertex_c[0],
+        u * vertex_a[1] + v * vertex_b[1] + w * vertex_c[1],
+        u * vertex_a[2] + v * vertex_b[2] + w * vertex_c[2]
+    ]
+    
+    # Factor de tiempo para animación
+    time_factor = time.time()
+    
+    # 1. EFECTO IRIDISCENTE - colores que cambian según posición
+    hue = (frag_pos[1] * 0.01 + time_factor * 0.5) % 1.0
+    
+    # Convertir HSV a RGB para colores iridiscentes
+    def hsv_to_rgb(h, s, v):
+        h = h * 6.0
+        i = int(h)
+        f = h - i
+        p = v * (1.0 - s)
+        q = v * (1.0 - s * f)
+        t = v * (1.0 - s * (1.0 - f))
+        
+        if i == 0: return [v, t, p]
+        elif i == 1: return [q, v, p]
+        elif i == 2: return [p, v, t]
+        elif i == 3: return [p, q, v]
+        elif i == 4: return [t, p, v]
+        else: return [v, p, q]
+    
+    # Color base iridiscente
+    base_color = hsv_to_rgb(hue, 0.8, 0.9)
+    
+    # 2. LÍNEAS DE ESCANEO horizontales
+    scan_line = math.sin(frag_pos[1] * 0.5 + time_factor * 3) * 0.3 + 0.7
+    
+    # 3. EFECTO DE FRESNEL (bordes más brillantes)
+    # Calcular normal del triángulo
+    edge1 = [vertex_b[0] - vertex_a[0], vertex_b[1] - vertex_a[1], vertex_b[2] - vertex_a[2]]
+    edge2 = [vertex_c[0] - vertex_a[0], vertex_c[1] - vertex_a[1], vertex_c[2] - vertex_a[2]]
+    
+    # Producto cruz para normal
+    normal = [
+        edge1[1] * edge2[2] - edge1[2] * edge2[1],
+        edge1[2] * edge2[0] - edge1[0] * edge2[2],
+        edge1[0] * edge2[1] - edge1[1] * edge2[0]
+    ]
+    
+    # Normalizar
+    normal_length = (normal[0]**2 + normal[1]**2 + normal[2]**2)**0.5
+    if normal_length > 0:
+        normal = [n / normal_length for n in normal]
+    
+    # Vector hacia la cámara (simplificado)
+    view_dir = [0, 0, 1]  # Asumiendo cámara mirando hacia -Z
+    
+    # Producto punto para efecto Fresnel
+    fresnel = 1.0 - abs(normal[0] * view_dir[0] + normal[1] * view_dir[1] + normal[2] * view_dir[2])
+    fresnel = fresnel ** 2  # Hacer el efecto más pronunciado
+    
+    # 4. EFECTO DE RUIDO/GLITCH ocasional
+    noise = math.sin(frag_pos[0] * 0.7 + frag_pos[1] * 0.3 + time_factor * 4) * 0.1 + 0.9
+    
+    # 5. COMBINAR TODOS LOS EFECTOS
+    final_color = [
+        min(1.0, base_color[0] * scan_line * noise + fresnel * 0.5),
+        min(1.0, base_color[1] * scan_line * noise + fresnel * 0.3),
+        min(1.0, base_color[2] * scan_line * noise + fresnel * 0.8)
+    ]
+    
+    # Asegurar que mantenga la vibración holográfica
+    intensity = 0.7 + 0.3 * math.sin(time_factor * 2)
+    final_color = [c * intensity for c in final_color]
+    
+    return final_color

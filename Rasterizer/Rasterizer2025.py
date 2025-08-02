@@ -132,57 +132,57 @@ while isRunning:
                 # Recalcular iluminación
                 objModel.calculate_lighting_colors()
                 
-            elif event.key == pygame.K_f:
-                # Toggle entre colores con iluminación y colores aleatorios
-                if hasattr(objModel, 'original_colors'):
-                    # Intercambiar colores
-                    temp = objModel.colors
-                    objModel.colors = objModel.original_colors
-                    objModel.original_colors = temp
+            # elif event.key == pygame.K_f:
+            #     # Toggle entre colores con iluminación y colores aleatorios
+            #     if hasattr(objModel, 'original_colors'):
+            #         # Intercambiar colores
+            #         temp = objModel.colors
+            #         objModel.colors = objModel.original_colors
+            #         objModel.original_colors = temp
                     
-                else:
-                    # Guardar colores actuales como originales
-                    objModel.original_colors = objModel.colors.copy()
-                    # Crear colores aleatorios
-                    import random
-                    objModel.colors = []
-                    for _ in objModel.faces:
-                        r = random.random()
-                        g = random.random() 
-                        b = random.random()
-                        objModel.colors.append([r, g, b])
+            #     else:
+            #         # Guardar colores actuales como originales
+            #         objModel.original_colors = objModel.colors.copy()
+            #         # Crear colores aleatorios
+            #         import random
+            #         objModel.colors = []
+            #         for _ in objModel.faces:
+            #             r = random.random()
+            #             g = random.random() 
+            #             b = random.random()
+            #             objModel.colors.append([r, g, b])
                     
-            elif event.key == pygame.K_g:
-                # Modo solo texturas (sin iluminación)
-                if objModel.texture:
-                    objModel.colors = []
-                    for i in range(len(objModel.faces)):
-                        # Usar colores directos de la textura sin modificar
-                        if i < len(objModel.face_uvs):
-                            uv_indices = objModel.face_uvs[i]
-                            if len(uv_indices) >= 3:
-                                # Obtener color del centro de la cara
-                                uv_a = objModel.texture_coords[uv_indices[0]] if uv_indices[0] < len(objModel.texture_coords) else [0.5, 0.5]
-                                uv_b = objModel.texture_coords[uv_indices[1]] if uv_indices[1] < len(objModel.texture_coords) else [0.5, 0.5]
-                                uv_c = objModel.texture_coords[uv_indices[2]] if uv_indices[2] < len(objModel.texture_coords) else [0.5, 0.5]
+            # elif event.key == pygame.K_g:
+            #     # Modo solo texturas (sin iluminación)
+            #     if objModel.texture:
+            #         objModel.colors = []
+            #         for i in range(len(objModel.faces)):
+            #             # Usar colores directos de la textura sin modificar
+            #             if i < len(objModel.face_uvs):
+            #                 uv_indices = objModel.face_uvs[i]
+            #                 if len(uv_indices) >= 3:
+            #                     # Obtener color del centro de la cara
+            #                     uv_a = objModel.texture_coords[uv_indices[0]] if uv_indices[0] < len(objModel.texture_coords) else [0.5, 0.5]
+            #                     uv_b = objModel.texture_coords[uv_indices[1]] if uv_indices[1] < len(objModel.texture_coords) else [0.5, 0.5]
+            #                     uv_c = objModel.texture_coords[uv_indices[2]] if uv_indices[2] < len(objModel.texture_coords) else [0.5, 0.5]
                                 
-                                # Centro del triángulo UV
-                                center_u = (uv_a[0] + uv_b[0] + uv_c[0]) / 3
-                                center_v = (uv_a[1] + uv_b[1] + uv_c[1]) / 3
+            #                     # Centro del triángulo UV
+            #                     center_u = (uv_a[0] + uv_b[0] + uv_c[0]) / 3
+            #                     center_v = (uv_a[1] + uv_b[1] + uv_c[1]) / 3
                                 
-                                texture_color = objModel.get_texture_color(center_u, center_v)
-                                objModel.colors.append(texture_color)
-                            else:
-                                objModel.colors.append([0.7, 0.7, 0.7])
-                        else:
-                            objModel.colors.append([0.7, 0.7, 0.7])
+            #                     texture_color = objModel.get_texture_color(center_u, center_v)
+            #                     objModel.colors.append(texture_color)
+            #                 else:
+            #                     objModel.colors.append([0.7, 0.7, 0.7])
+            #             else:
+            #                 objModel.colors.append([0.7, 0.7, 0.7])
                     
-                else:
-                    print("No texture loaded for texture-only mode")
+            #     else:
+            #         print("No texture loaded for texture-only mode")
                     
-            elif event.key == pygame.K_h:
-                # Test de iluminación dramática
-                objModel.test_dramatic_lighting()
+            # elif event.key == pygame.K_h:
+            #     # Test de iluminación dramática
+            #     objModel.test_dramatic_lighting()
                 
             elif event.key == pygame.K_0:
                 # Modo básico: solo colores sólidos sin texturas ni lighting
@@ -198,7 +198,12 @@ while isRunning:
                         objModel.colors.append([0.0, 0.0, 1.0])  # Azul
                     else:
                         objModel.colors.append([1.0, 1.0, 0.0])  # Amarillo
-                
+            elif event.key == pygame.K_b:
+                objModel.apply_hologram_effect()
+                print("shader aplicado, presiona N para animar")
+            elif event.key == pygame.K_n:
+                objModel.animate_hologram_effect(deltaTime)
+                print("animación holograma aplicada")  
 
     keys = pygame.key.get_pressed()
 
@@ -252,6 +257,7 @@ while isRunning:
             camera_distance = max(1, camera_distance)  # No muy cerca
         if keys[pygame.K_o]:  # Alejar
             camera_distance += 1.5 * deltaTime  # Reducido de 5 a 1.5
+
 
         # Actualizar posición de cámara usando órbita
         camera.orbit_around_target(camera_angle_h, camera_angle_v, camera_distance)

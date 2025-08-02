@@ -2,6 +2,8 @@ import random
 import numpy as np
 from PIL import Image
 from MathLib import *
+import time
+import math
 
 class Model:
     def __init__(self):
@@ -156,7 +158,7 @@ class Model:
                             else:
                                 face_texture_coords.append(0)  # UV por defecto
                         
-                        # Si la cara tiene más de 3 vértices, triangularla
+                        # Si la cara tiene más de 3 vértices, triangulara
                         if len(face_vertices) >= 3:
                             for i in range(1, len(face_vertices) - 1):
                                 triangle = [face_vertices[0], face_vertices[i], face_vertices[i + 1]]
@@ -205,7 +207,7 @@ class Model:
         # Configuración de luz
         light_pos = [5, 5, 5]      # Posición de la luz
         light_color = [1, 1, 1]    # Color blanco
-        ambient_strength = 0.5     # Luz ambiente más alta para preservar texturas
+        ambient_strength = 0.8     # Luz ambiente más alta para preservar texturas
         
         self.colors = []
         
@@ -260,10 +262,11 @@ class Model:
             diffuse = max(0, normal[0] * light_dir[0] + normal[1] * light_dir[1] + normal[2] * light_dir[2])
             
             # Intensidad final (más sutil)
-            final_intensity = ambient_strength + (1 - ambient_strength) * diffuse
+            final_intensity = ambient_strength + (1 - ambient_strength) * diffuse * 1.5
+            final_intensity = min(1.0, final_intensity)  # Limitar a 1.0
             
             # Color base de la textura
-            base_color = [0.7, 0.6, 0.5]  # Color por defecto
+            base_color = [0.9, 0.8, 0.7]  # Color por defecto
             
             # Si hay textura, obtener color promedio más representativo
             if self.texture and i < len(self.face_uvs):
@@ -317,27 +320,27 @@ class Model:
                   f"G={sum(c[1] for c in self.colors[:10])/min(10, len(self.colors)):.3f}, "
                   f"B={sum(c[2] for c in self.colors[:10])/min(10, len(self.colors)):.3f}")
 
-    def test_dramatic_lighting(self):
-        """Crear iluminación dramática para prueba"""
-        print("Aplicando iluminación dramática de prueba...")
+    # def test_dramatic_lighting(self):
+    #     """Crear iluminación dramática para prueba"""
+    #     print("Aplicando iluminación dramática de prueba...")
         
-        # Colores extremos para poder ver la diferencia
-        light_color = [1.0, 1.0, 0.8]  # Luz amarillenta
-        dark_color = [0.1, 0.1, 0.2]   # Azul muy oscuro
+    #     # Colores extremos para poder ver la diferencia
+    #     light_color = [1.0, 1.0, 0.8]  # Luz amarillenta
+    #     dark_color = [0.1, 0.1, 0.2]   # Azul muy oscuro
         
-        self.colors = []
+    #     self.colors = []
         
-        for i, face in enumerate(self.faces):
-            # Alternar entre claro y oscuro basado en el índice
-            if i % 3 == 0:
-                self.colors.append(light_color.copy())
-            elif i % 3 == 1:
-                self.colors.append(dark_color.copy())
-            else:
-                self.colors.append([0.5, 0.5, 0.5])  # Gris medio
+    #     for i, face in enumerate(self.faces):
+    #         # Alternar entre claro y oscuro basado en el índice
+    #         if i % 3 == 0:
+    #             self.colors.append(light_color.copy())
+    #         elif i % 3 == 1:
+    #             self.colors.append(dark_color.copy())
+    #         else:
+    #             self.colors.append([0.5, 0.5, 0.5])  # Gris medio
         
-        print(f"Colores dramáticos aplicados: {len(self.colors)} caras")
-        print(f"Patrón: Claro({light_color}) -> Oscuro({dark_color}) -> Gris")
+    #     print(f"Colores dramáticos aplicados: {len(self.colors)} caras")
+    #     print(f"Patrón: Claro({light_color}) -> Oscuro({dark_color}) -> Gris")
 
     def scale_to_fit(self, target_size=2.0):
         """Escalar modelo para que quepa en un cubo de tamaño target_size centrado en origen"""
@@ -422,3 +425,89 @@ class Model:
         print(f"Modelo escalado 3D: factor={scale_factor:.3f}")
         print(f"Tamaño original: {size_x:.1f} x {size_y:.1f} x {size_z:.1f}")
         print(f"Centro: ({self.translation[0]:.1f}, {self.translation[1]:.1f}, {self.translation[2]:.1f})")
+    
+    def apply_hologram_effect(self):
+        """Aplicar efecto de holograma al modelo"""
+        print("Aplicando efecto de holograma...")
+        
+        # Generar colores holográficos para cada cara
+        self.colors = []
+        import time
+        import math
+        
+        time_factor = time.time()
+        
+        for i, face in enumerate(self.faces):
+            # Color base que cambia según la cara (efecto arcoíris)
+            hue = (i * 0.01 + time_factor * 0.1) % 1.0
+            
+            # Convertir HSV a RGB simple
+            def simple_hsv_to_rgb(h):
+                h = h * 6.0
+                if h < 1.0: return [1.0, h, 0.9]
+                elif h < 2.0: return [2.0-h, 1.0, 0.9]
+                elif h < 3.0: return [0.9, 1.0, h-2.0]
+                elif h < 4.0: return [0.9, 4.0-h, 1.0]
+                elif h < 5.0: return [h-4.0, 0.9, 1.0]
+                else: return [1.0, 0.9, 6.0-h]
+            
+            color = simple_hsv_to_rgb(hue)
+            
+            # Agregar efecto de escaneado (líneas que se mueven)
+            scan_effect = 0.7 + 0.3 * math.sin(i * 0.1 + time_factor * 5)
+            
+            # Color final más brillante y holográfico
+            final_color = [
+                min(1.0, color[0] * scan_effect),
+                min(1.0, color[1] * scan_effect), 
+                min(1.0, color[2] * scan_effect)
+            ]
+            
+            self.colors.append(final_color)
+        
+        print(f"Efecto holográfico aplicado a {len(self.faces)} caras")
+
+    def animate_hologram(self):
+        """Animar el efecto de holograma"""
+        # Simplemente volver a aplicar el efecto para que se anime
+        self.apply_hologram_effect()
+        
+        
+    def animate_hologram_effect(self, deltaTime):
+        """Animar el efecto de holograma con el tiempo"""
+        if not hasattr(self, 'hologram_time'):
+            self.hologram_time = 0.0
+        
+        self.hologram_time += deltaTime
+        
+        # Regenerar colores holográficos con animación temporal
+        import math
+        
+        for i in range(len(self.faces)):
+            if i < len(self.colors):
+                # Color base que cambia según la cara y el tiempo
+                hue = (i * 0.01 + self.hologram_time * 0.5) % 1.0
+                
+                # Convertir HSV a RGB con animación
+                h = hue * 6.0
+                if h < 1:
+                    base_color = [1.0, h, 0.0]
+                elif h < 2:
+                    base_color = [2-h, 1.0, 0.0]
+                elif h < 3:
+                    base_color = [0.0, 1.0, h-2]
+                elif h < 4:
+                    base_color = [0.0, 4-h, 1.0]
+                elif h < 5:
+                    base_color = [h-4, 0.0, 1.0]
+                else:
+                    base_color = [1.0, 0.0, 6-h]
+                
+                # Agregar brillo animado
+                brightness = 0.8 + 0.2 * math.sin(self.hologram_time * 2 + i * 0.1)
+                
+                self.colors[i] = [
+                    base_color[0] * brightness,
+                    base_color[1] * brightness,
+                    base_color[2] * brightness
+                ]

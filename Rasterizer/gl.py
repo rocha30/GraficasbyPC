@@ -188,11 +188,30 @@ class Renderer(object):
                     # Determinar color del pixel
                     color = self.currColor
                     
-                    # Si hay textura, interpolar coordenadas UV
-                    if uv_a and uv_b and uv_c and model:
+                    # Si hay textura Y colores de lighting, combinarlos
+                    if uv_a and uv_b and uv_c and model and hasattr(model, 'colors') and face_idx is not None and face_idx < len(model.colors):
                         u = alpha * uv_a[0] + beta * uv_b[0] + gamma * uv_c[0]
                         v = alpha * uv_a[1] + beta * uv_b[1] + gamma * uv_c[1]
-                        color = model.get_texture_color(u, v)
+                        texture_color = model.get_texture_color(u, v)
+                        lighting_color = model.colors[face_idx]
+                        
+                        # Multiplicar textura por lighting (ambos en rango 0-1)
+                        color = [
+                            texture_color[0] * lighting_color[0],
+                            texture_color[1] * lighting_color[1], 
+                            texture_color[2] * lighting_color[2]
+                        ]
+                    
+                    # Si solo hay textura (sin lighting)
+                    elif uv_a and uv_b and uv_c and model:
+                        u = alpha * uv_a[0] + beta * uv_b[0] + gamma * uv_c[0]
+                        v = alpha * uv_a[1] + beta * uv_b[1] + gamma * uv_c[1]
+                        texture_color = model.get_texture_color(u, v)
+                        color = texture_color
+                    
+                    # Si solo hay lighting (sin textura)
+                    elif hasattr(model, 'colors') and face_idx is not None and face_idx < len(model.colors):
+                        color = model.colors[face_idx]
                     
                     self.glPoint(x, y, color, z)
 
@@ -267,13 +286,16 @@ class Renderer(object):
                 
                 # Usar color base del modelo
                 if hasattr(model, 'texture') and model.texture:
-                    # Si hay textura, usar color neutro
+                    # Si hay textura, usar color neutro - el lighting se aplica por pixel
                     self.glColor(1.0, 1.0, 1.0)
                 else:
-                    # Si no hay textura, usar color aleatorio
-                    if face_idx < len(model.colors):
+                    # Si no hay textura, usar el color de lighting directamente
+                    if hasattr(model, 'colors') and face_idx < len(model.colors):
                         color = model.colors[face_idx]
                         self.glColor(color[0], color[1], color[2])
+                    else:
+                        # Fallback a color aleatorio si no hay lighting
+                        self.glColor(1.0, 1.0, 1.0)
                 
                 # Renderizar según el tipo de primitiva
                 if self.primitiveType == TRIANGLES:

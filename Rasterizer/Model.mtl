@@ -1,0 +1,98 @@
+# Blender MTL File: 'Model.blend'
+# Material Count: 8
+
+newmtl mp_ftl_3_1_feet
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Bump FTL_Bladework\\mp_ftl_head_sabre_team_7\\_images\\mp_ftl_3_1_feet_nml.tga
+map_Kd FTL_Bladework\\mp_ftl_head_sabre_team_7\\_images\\mp_ftl_3_1_feet_col.tga
+
+newmtl mp_ftl_3_3_loadout
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Bump FTL_Bladework\\mp_ftl_head_sabre_team_7\\_images\\mp_ftl_3_1_loadout_nml.tga
+map_Kd FTL_Bladework\\mp_ftl_head_sabre_team_7\\_images\\mp_ftl_3_3_loadout_col.tga
+
+newmtl mp_ftl_sabre_team_7_backpack
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Bump FTL_Bladework\\mp_ftl_head_sabre_team_7\\_images\\mp_ftl_sabre_team_7_backpack_nml.tga
+map_Kd FTL_Bladework\\mp_ftl_head_sabre_team_7\\_images\\mp_ftl_sabre_team_7_backpack_col.tga
+
+newmtl mp_ftl_sabre_team_7_cables
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Bump FTL_Bladework\\mp_ftl_head_sabre_team_7\\_images\\mp_ftl_3_1_cables_nml.tga
+map_Kd FTL_Bladework\\mp_ftl_head_sabre_team_7\\_images\\mp_ftl_sabre_team_7_cables_col.tga
+
+newmtl mp_ftl_sabre_team_7_hands
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Bump FTL_Bladework\\mp_ftl_head_sabre_team_7\\_images\\mp_ftl_3_1_hands_nml.tga
+map_Kd FTL_Bladework\\mp_ftl_head_sabre_team_7\\_images\\mp_ftl_sabre_team_7_hands_col.tga
+
+newmtl mp_ftl_sabre_team_7_mask
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Bump FTL_Bladework\\mp_ftl_head_sabre_team_7\\_images\\mp_ftl_3_1_mask_nml.tga
+map_Kd FTL_Bladework\\mp_ftl_head_sabre_team_7\\_images\\mp_ftl_sabre_team_7_mask_col.tga
+
+newmtl mp_ftl_sabre_team_7_pants
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Bump FTL_Bladework\\mp_ftl_head_sabre_team_7\\_images\\mp_ftl_3_1_pants_nml.tga
+map_Kd FTL_Bladework\\mp_ftl_body_sabre_team_7\\_images\\mp_ftl_sabre_team_7_pants_col.tga
+
+newmtl mp_ftl_sabre_team_7_shirts
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Bump FTL_Bladework\\mp_ftl_body_sabre_team_7\\_images\\mp_ftl_3_1_shirts_nml.tga
+map_Kd FTL_Bladework\\mp_ftl_body_sabre_team_7\\_images\\mp_ftl_sabre_team_7_shirts_col.tga

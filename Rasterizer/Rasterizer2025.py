@@ -183,6 +183,11 @@ while isRunning:
             # elif event.key == pygame.K_h:
             #     # Test de iluminación dramática
             #     objModel.test_dramatic_lighting()
+            elif event.key == pygame.K_v:
+                from shaders import lavaVertexShader, lavaFragmentShader
+                objModel.vertexShader = lavaVertexShader
+                objModel.fragmentShader = lavaFragmentShader
+                print("Shader de lava aplicado! El modelo ahora parece lava derretida")
                 
             elif event.key == pygame.K_0:
                 # Modo básico: solo colores sólidos sin texturas ni lighting

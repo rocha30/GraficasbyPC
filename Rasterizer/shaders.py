@@ -291,3 +291,101 @@ def hologramFragmentShader(vertex_a, vertex_b, vertex_c, u, v, w, **kwargs):
     final_color = [c * intensity for c in final_color]
     
     return final_color
+
+
+
+def lavaVertexShader(vertex, **kwargs):
+    """Vertex shader para efecto de lava con deformación"""
+    import time
+    import math
+    
+    # Usar transformaciones básicas primero
+    transformed_vertex = vertexShader(vertex, **kwargs)
+    
+    # Factor de tiempo para animación
+    time_factor = time.time() * 0.8  # Velocidad más lenta para lava
+    
+    # Deformación de lava - ondas que burbujean
+    bubble_x = 0.3 * math.sin(vertex[1] * 0.5 + time_factor) * math.cos(vertex[2] * 0.3 + time_factor * 0.7)
+    bubble_y = 0.2 * math.cos(vertex[0] * 0.4 + time_factor * 1.2) * math.sin(vertex[2] * 0.6 + time_factor)
+    bubble_z = 0.15 * math.sin(vertex[0] * 0.3 + vertex[1] * 0.4 + time_factor * 1.5)
+    
+    # Aplicar deformación
+    transformed_vertex[0] += bubble_x
+    transformed_vertex[1] += bubble_y
+    transformed_vertex[2] += bubble_z
+    
+    return transformed_vertex
+
+def lavaFragmentShader(vertex_a, vertex_b, vertex_c, u, v, w, **kwargs):
+    """Fragment shader para efecto de lava"""
+    import time
+    import math
+    
+    # Calcular posición del fragmento
+    frag_pos = [
+        u * vertex_a[0] + v * vertex_b[0] + w * vertex_c[0],
+        u * vertex_a[1] + v * vertex_b[1] + w * vertex_c[1],
+        u * vertex_a[2] + v * vertex_b[2] + w * vertex_c[2]
+    ]
+    
+    # Factor de tiempo para animación
+    time_factor = time.time()
+    
+    # 1. PATRÓN BASE DE LAVA - múltiples capas de ruido
+    noise1 = math.sin(frag_pos[0] * 0.1 + frag_pos[1] * 0.15 + time_factor * 0.3)
+    noise2 = math.cos(frag_pos[1] * 0.08 + frag_pos[2] * 0.12 + time_factor * 0.5)
+    noise3 = math.sin(frag_pos[0] * 0.05 + frag_pos[2] * 0.07 + time_factor * 0.2)
+    
+    # Combinar ruidos para crear patrón de lava
+    lava_pattern = (noise1 + noise2 + noise3) / 3.0
+    
+    # 2. GRADIENTE DE TEMPERATURA - de rojo oscuro a amarillo brillante
+    temperature = (lava_pattern + 1.0) * 0.5  # Normalizar a 0-1
+    
+    # Agregar variación temporal para "burbujas calientes"
+    hot_spots = math.sin(frag_pos[0] * 0.3 + time_factor * 2) * math.cos(frag_pos[1] * 0.25 + time_factor * 1.8)
+    temperature += hot_spots * 0.3
+    
+    # Clamp temperatura
+    temperature = max(0.0, min(1.0, temperature))
+    
+    # 3. MAPEO DE COLOR BASADO EN TEMPERATURA
+    if temperature < 0.3:
+        # Lava fría - rojo muy oscuro/negro
+        base_color = [temperature * 0.8, 0.0, 0.0]
+    elif temperature < 0.6:
+        # Lava caliente - rojo a naranja
+        t = (temperature - 0.3) / 0.3
+        base_color = [0.8 + t * 0.2, t * 0.4, 0.0]
+    elif temperature < 0.85:
+        # Lava muy caliente - naranja a amarillo
+        t = (temperature - 0.6) / 0.25
+        base_color = [1.0, 0.4 + t * 0.5, t * 0.3]
+    else:
+        # Lava extremadamente caliente - amarillo brillante
+        t = (temperature - 0.85) / 0.15
+        base_color = [1.0, 0.9 + t * 0.1, 0.3 + t * 0.7]
+    
+    # 4. EFECTO DE BRILLO/INCANDESCENCIA
+    glow_intensity = 0.7 + 0.3 * math.sin(time_factor * 1.5 + frag_pos[0] * 0.1)
+    
+    # 5. VENAS DE LAVA MÁS CALIENTE
+    vein1 = math.sin(frag_pos[0] * 0.2 + frag_pos[1] * 0.1 + time_factor * 0.4)
+    vein2 = math.cos(frag_pos[1] * 0.15 + frag_pos[2] * 0.2 + time_factor * 0.6)
+    
+    if abs(vein1) < 0.1 or abs(vein2) < 0.15:
+        # Venas más calientes - amarillo/blanco
+        base_color[0] = min(1.0, base_color[0] + 0.3)
+        base_color[1] = min(1.0, base_color[1] + 0.4)
+        base_color[2] = min(1.0, base_color[2] + 0.2)
+        glow_intensity *= 1.5
+    
+    # 6. APLICAR BRILLO FINAL
+    final_color = [
+        min(1.0, base_color[0] * glow_intensity),
+        min(1.0, base_color[1] * glow_intensity),
+        min(1.0, base_color[2] * glow_intensity)
+    ]
+    
+    return final_color

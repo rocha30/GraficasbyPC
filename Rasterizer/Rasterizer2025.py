@@ -206,6 +206,20 @@ while isRunning:
                     print(f"ERROR: No se pueden importar shaders: {e}")
                 except Exception as e:
                     print(f"ERROR: {e}")
+            
+            elif event.key == pygame.K_n:
+                try:
+                    from shaders import resetToDefaultShaders, electricVertexShader, electricFragmentShader
+                    resetToDefaultShaders(objModel)  # Limpiar primero
+                    
+                    objModel.texture = None
+                    objModel.vertexShader = electricVertexShader
+                    objModel.fragmentShader = electricFragmentShader
+                    print("Shader eléctrico aplicado! El modelo ahora parece electricidad chispeante")
+                except ImportError as e:
+                    print(f"ERROR: No se pueden importar shaders: {e}")
+                except Exception as e:
+                    print(f"ERROR: {e}")
 
 
 

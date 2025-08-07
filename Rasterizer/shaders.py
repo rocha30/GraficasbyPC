@@ -90,89 +90,106 @@ def lightingVertexShader(vertex, **kwargs):
     return [x, y, z]
 
 
-def fragmentShaderWithBarycentric(vertex_a, vertex_b, vertex_c, barycentric_coords, **kwargs):
-    """Fragment shader mejorado que usa coordenadas baricéntricas directamente"""
-    u, v, w = barycentric_coords
+def fragmentShaderWithBarycentric(vertex_a, vertex_b, vertex_c, u, v, w, **kwargs):
+    """Fragment shader que usa coordenadas baricéntricas para iluminación suave"""
+    import math
     
-    # Configuración de luz
-    light_pos = [5, 5, 5]      # Posición de la luz
-    light_color = [1, 1, 1]    # Color blanco
-    ambient_strength = 0.3     # Luz ambiente
+    try:
+        # Obtener modelo del kwargs
+        model = kwargs.get('model')
+        face_idx = kwargs.get('face_idx')
+        
+        # Color base
+        base_colors = [
+            [1.0, 0.8, 0.6],  # Naranja cálido
+            [0.8, 1.0, 0.6],  # Verde claro
+            [0.6, 0.8, 1.0],  # Azul claro
+            [1.0, 0.6, 0.8],  # Rosa
+            [0.9, 0.9, 0.7],  # Amarillo suave
+        ]
+        
+        # Seleccionar color base según índice de cara
+        if face_idx is not None:
+            base_color = base_colors[face_idx % len(base_colors)]
+        else:
+            base_color = [0.9, 0.7, 0.5]  # Naranja por defecto
+        
+        # Si hay colores de lighting precalculados, MEZCLARLOS con el color base
+        if model and hasattr(model, 'colors') and face_idx is not None and face_idx < len(model.colors):
+            lighting_color = model.colors[face_idx]
+            # Mezclar colores en lugar de reemplazar
+            base_color = [
+                (base_color[0] + lighting_color[0]) * 0.5,
+                (base_color[1] + lighting_color[1]) * 0.5,
+                (base_color[2] + lighting_color[2]) * 0.5
+            ]
+        
+        # Calcular posición del fragmento usando coordenadas baricéntricas
+        frag_pos = [
+            u * vertex_a[0] + v * vertex_b[0] + w * vertex_c[0],
+            u * vertex_a[1] + v * vertex_b[1] + w * vertex_c[1], 
+            u * vertex_a[2] + v * vertex_b[2] + w * vertex_c[2]
+        ]
+        
+        # ILUMINACIÓN MÁS FUERTE
+        # Simular múltiples luces
+        light_dirs = [
+            [-1, 1, 1],   # Luz principal
+            [1, 0.5, 0.8], # Luz de relleno
+            [0, -1, 0.5]   # Luz desde abajo
+        ]
+        
+        # Calcular normal del triángulo
+        edge1 = [vertex_b[0] - vertex_a[0], vertex_b[1] - vertex_a[1], vertex_b[2] - vertex_a[2]]
+        edge2 = [vertex_c[0] - vertex_a[0], vertex_c[1] - vertex_a[1], vertex_c[2] - vertex_a[2]]
+        
+        # Producto cruz para normal
+        normal = [
+            edge1[1] * edge2[2] - edge1[2] * edge2[1],
+            edge1[2] * edge2[0] - edge1[0] * edge2[2], 
+            edge1[0] * edge2[1] - edge1[1] * edge2[0]
+        ]
+        
+        # Normalizar normal
+        normal_length = (normal[0]**2 + normal[1]**2 + normal[2]**2)**0.5
+        if normal_length > 0:
+            normal = [n / normal_length for n in normal]
+        else:
+            normal = [0, 0, 1]  # Normal por defecto
+        
+        # Calcular iluminación de múltiples fuentes
+        total_lighting = 0.5  # Luz ambiente más fuerte
+        
+        for light_dir in light_dirs:
+            # Normalizar dirección de luz
+            light_length = (light_dir[0]**2 + light_dir[1]**2 + light_dir[2]**2)**0.5
+            light_dir_norm = [l / light_length for l in light_dir]
+            
+            # Producto punto para intensidad de luz
+            dot_product = max(0, normal[0] * light_dir_norm[0] + normal[1] * light_dir_norm[1] + normal[2] * light_dir_norm[2])
+            total_lighting += dot_product * 0.4  # Cada luz contribuye menos
+        
+        # Asegurar que la iluminación no sea demasiado baja
+        total_lighting = max(0.6, min(1.3, total_lighting))
+        
+        # VARIACIÓN ESPACIAL para más interés visual
+        spatial_variation = 0.1 * math.sin(frag_pos[0] * 0.1) * math.cos(frag_pos[1] * 0.08)
+        total_lighting += spatial_variation
+        
+        # Aplicar iluminación al color base
+        final_color = [
+            min(1.0, base_color[0] * total_lighting),
+            min(1.0, base_color[1] * total_lighting),
+            min(1.0, base_color[2] * total_lighting)
+        ]
+        
+        return final_color
+        
+    except Exception as e:
+        print(f"Error en fragmentShaderWithBarycentric: {e}")
+        return [1.0, 0.7, 0.4]  # Naranja cálido por defecto en lugar de gris
     
-    # Obtener color base de la textura o color sólido
-    model = kwargs.get("model")
-    base_color = [0.7, 0.7, 0.7]  # Color gris por defecto
     
-    if model and hasattr(model, 'texture') and model.texture:
-        face_idx = kwargs.get("face_idx")
-        if face_idx is not None and face_idx < len(model.face_uvs):
-            uv_indices = model.face_uvs[face_idx]
-            if len(uv_indices) >= 3:
-                # Interpolar coordenadas UV usando coordenadas baricéntricas
-                uv_a = model.texture_coords[uv_indices[0]] if uv_indices[0] < len(model.texture_coords) else [0, 0]
-                uv_b = model.texture_coords[uv_indices[1]] if uv_indices[1] < len(model.texture_coords) else [0, 0]
-                uv_c = model.texture_coords[uv_indices[2]] if uv_indices[2] < len(model.texture_coords) else [0, 0]
-                
-                # Interpolación baricéntrica más eficiente
-                tex_u = u * uv_a[0] + v * uv_b[0] + w * uv_c[0]
-                tex_v = u * uv_a[1] + v * uv_b[1] + w * uv_c[1]
-                
-                base_color = model.get_texture_color(tex_u, tex_v)
-    
-    # Calcular posición del fragmento interpolada usando coordenadas baricéntricas
-    frag_pos = [
-        u * vertex_a[0] + v * vertex_b[0] + w * vertex_c[0],
-        u * vertex_a[1] + v * vertex_b[1] + w * vertex_c[1],
-        u * vertex_a[2] + v * vertex_b[2] + w * vertex_c[2]
-    ]
-    
-    # Calcular normal del triángulo (más eficiente)
-    edge1 = [vertex_b[0] - vertex_a[0], vertex_b[1] - vertex_a[1], vertex_b[2] - vertex_a[2]]
-    edge2 = [vertex_c[0] - vertex_a[0], vertex_c[1] - vertex_a[1], vertex_c[2] - vertex_a[2]]
-    
-    # Producto cruz para obtener normal
-    normal = [
-        edge1[1] * edge2[2] - edge1[2] * edge2[1],
-        edge1[2] * edge2[0] - edge1[0] * edge2[2], 
-        edge1[0] * edge2[1] - edge1[1] * edge2[0]
-    ]
-    
-    # Normalizar
-    normal_length = (normal[0]**2 + normal[1]**2 + normal[2]**2)**0.5
-    if normal_length > 0:
-        normal = [n / normal_length for n in normal]
-    else:
-        normal = [0, 1, 0]  # Normal por defecto
-    
-    # Vector desde fragmento hacia la luz
-    light_dir = [
-        light_pos[0] - frag_pos[0],
-        light_pos[1] - frag_pos[1], 
-        light_pos[2] - frag_pos[2]
-    ]
-    
-    # Normalizar dirección de luz
-    light_length = (light_dir[0]**2 + light_dir[1]**2 + light_dir[2]**2)**0.5
-    if light_length > 0:
-        light_dir = [ld / light_length for ld in light_dir]
-    
-    # Calcular intensidad diffusa (Lambert)
-    diffuse = max(0, normal[0] * light_dir[0] + normal[1] * light_dir[1] + normal[2] * light_dir[2])
-    
-    # Combinar luz ambiente y diffusa
-    final_intensity = ambient_strength + (1 - ambient_strength) * diffuse
-    
-    # Aplicar iluminación al color base
-    final_color = [
-        min(1.0, base_color[0] * light_color[0] * final_intensity),
-        min(1.0, base_color[1] * light_color[1] * final_intensity),
-        min(1.0, base_color[2] * light_color[2] * final_intensity)
-    ]
-    
-    return final_color
-
-
-
 def simpleVertexShader(vertex, **kwargs):
     """Shader más simple para debugging"""
     modelMatrix = kwargs.get("modelMatrix")
@@ -538,5 +555,165 @@ def crystalFragmentShader(vertex_a, vertex_b, vertex_c, u, v, w, **kwargs):
     except Exception as e:
         print(f"Error en crystalFragmentShader: {e}")
         return [0.8, 0.9, 1.0]  # Azul cristal por defecto
+
+def electricVertexShader(vertex, **kwargs):
+    """Vertex shader para efecto de tormenta eléctrica con sacudidas"""
+    import time
+    import math
+    import random
+    
+    # Usar transformaciones básicas primero
+    transformed_vertex = vertexShader(vertex, **kwargs)
+    
+    # Factor de tiempo rápido para efectos eléctricos
+    time_factor = time.time() * 4
+    
+    # SACUDIDAS ELÉCTRICAS - movimiento errático y rápido
+    # Usar posición del vértice como seed para randomness consistente
+    vertex_seed = int((vertex[0] + vertex[1] + vertex[2]) * 100) % 1000
+    
+    # Pulsos eléctricos principales - grandes y espasmódicos
+    electric_pulse = math.sin(time_factor * 3 + vertex_seed * 0.01)
+    if electric_pulse > 0.7:  # Solo en picos altos
+        # Sacudida fuerte cuando hay "descarga"
+        shock_x = 3.0 * math.sin(time_factor * 15 + vertex_seed * 0.1)
+        shock_y = 2.5 * math.cos(time_factor * 12 + vertex_seed * 0.15) 
+        shock_z = 1.5 * math.sin(time_factor * 18 + vertex_seed * 0.08)
+    else:
+        # Movimiento eléctrico sutil entre descargas
+        shock_x = 0.3 * math.sin(time_factor * 8 + vertex_seed * 0.05)
+        shock_y = 0.25 * math.cos(time_factor * 6 + vertex_seed * 0.07)
+        shock_z = 0.2 * math.sin(time_factor * 10 + vertex_seed * 0.04)
+    
+    # ARCOS ELÉCTRICOS - conectar vértices cercanos con distorsión
+    arc_factor = 0.5 * math.sin(time_factor * 2 + vertex[0] * 0.1 + vertex[1] * 0.08)
+    
+    # Aplicar efectos eléctricos
+    transformed_vertex[0] += shock_x + arc_factor
+    transformed_vertex[1] += shock_y + arc_factor * 0.5
+    transformed_vertex[2] += shock_z + arc_factor * 0.3
+    
+    return transformed_vertex
+
+def electricFragmentShader(vertex_a, vertex_b, vertex_c, u, v, w, **kwargs):
+    """Fragment shader para tormenta eléctrica con rayos y chispas"""
+    import time
+    import math
+    import random
+    
+    try:
+        # Calcular posición del fragmento
+        frag_pos = [
+            u * vertex_a[0] + v * vertex_b[0] + w * vertex_c[0],
+            u * vertex_a[1] + v * vertex_b[1] + w * vertex_c[1], 
+            u * vertex_a[2] + v * vertex_b[2] + w * vertex_c[2]
+        ]
+        
+        time_factor = time.time()
+        
+        # 1. BASE ELÉCTRICA - azul profundo con variaciones
+        base_electric = [0.1, 0.3, 0.8]  # Azul eléctrico base
+        
+        # 2. RAYOS ELÉCTRICOS - líneas brillantes que aparecen/desaparecen
+        # Crear patrones de rayos usando funciones trigonométricas
+        lightning_pattern1 = math.sin(frag_pos[0] * 0.5 + frag_pos[1] * 0.3 + time_factor * 8)
+        lightning_pattern2 = math.cos(frag_pos[1] * 0.7 + frag_pos[2] * 0.4 + time_factor * 12)
+        lightning_pattern3 = math.sin(frag_pos[0] * 0.3 + frag_pos[2] * 0.6 + time_factor * 6)
+        
+        # Detectar "rayos" donde los patrones se alinean
+        lightning_intensity = 0.0
+        
+        # Rayo horizontal
+        if abs(lightning_pattern1) > 0.85:
+            lightning_intensity += 0.6
+            
+        # Rayo vertical  
+        if abs(lightning_pattern2) > 0.9:
+            lightning_intensity += 0.8
+            
+        # Rayo diagonal
+        if abs(lightning_pattern3) > 0.88:
+            lightning_intensity += 0.5
+            
+        # Rayos que se cruzan = descarga mayor
+        if abs(lightning_pattern1) > 0.85 and abs(lightning_pattern2) > 0.85:
+            lightning_intensity += 1.2
+        
+        # 3. PULSOS ELÉCTRICOS - toda la superficie pulsa
+        electric_pulse = 0.3 + 0.4 * math.sin(time_factor * 4)
+        super_pulse = 0.0
+        
+        # Super pulso ocasional (como relámpago mayor)
+        pulse_trigger = math.sin(time_factor * 0.8)
+        if pulse_trigger > 0.85:
+            super_pulse = 0.8 * (pulse_trigger - 0.85) / 0.15  # 0 a 0.8
+        
+        # 4. ARCOS ELÉCTRICOS - conexiones entre puntos
+        arc_distance = ((frag_pos[0] % 10)**2 + (frag_pos[1] % 8)**2)**0.5
+        arc_pattern = math.sin(arc_distance * 0.8 + time_factor * 10)
+        
+        arc_intensity = 0.0
+        if arc_pattern > 0.75:
+            arc_intensity = (arc_pattern - 0.75) / 0.25 * 0.4  # 0 a 0.4
+        
+        # 5. CHISPAS - puntos brillantes aleatorios
+        spark_seed = int((frag_pos[0] + frag_pos[1] + frag_pos[2]) * 50) % 100
+        spark_time = (time_factor * 20 + spark_seed) % 3.14159
+        
+        spark_intensity = 0.0
+        if math.sin(spark_time) > 0.95:  # Chispas muy esporádicas
+            spark_intensity = 0.6
+        
+        # 6. COMBINACIÓN DE COLORES
+        # Color base eléctrico
+        electric_blue = [0.1 + electric_pulse * 0.3, 0.4 + electric_pulse * 0.4, 0.9 + electric_pulse * 0.1]
+        
+        # Rayos = azul brillante a blanco
+        if lightning_intensity > 0:
+            # Transición azul eléctrico → blanco según intensidad
+            lightning_white = min(1.0, lightning_intensity)
+            electric_blue[0] += lightning_white * 0.8  # Más rojo para blanco
+            electric_blue[1] += lightning_white * 0.6  # Más verde para blanco
+            electric_blue[2] = min(1.0, electric_blue[2] + lightning_white * 0.1)
+        
+        # Super pulso = blanco puro
+        if super_pulse > 0:
+            electric_blue = [
+                min(1.0, electric_blue[0] + super_pulse * 0.9),
+                min(1.0, electric_blue[1] + super_pulse * 0.9), 
+                min(1.0, electric_blue[2] + super_pulse * 0.9)
+            ]
+        
+        # Arcos = azul cyan brillante
+        if arc_intensity > 0:
+            electric_blue[1] = min(1.0, electric_blue[1] + arc_intensity)  # Más verde
+            electric_blue[2] = min(1.0, electric_blue[2] + arc_intensity * 0.5)
+        
+        # Chispas = blanco puro
+        if spark_intensity > 0:
+            electric_blue = [
+                min(1.0, electric_blue[0] + spark_intensity),
+                min(1.0, electric_blue[1] + spark_intensity),
+                min(1.0, electric_blue[2] + spark_intensity)
+            ]
+        
+        # 7. INTENSIDAD FINAL
+        final_intensity = 0.6 + electric_pulse + lightning_intensity + arc_intensity + spark_intensity + super_pulse
+        final_intensity = min(1.0, final_intensity)
+        
+        final_color = [
+            electric_blue[0] * final_intensity,
+            electric_blue[1] * final_intensity,
+            electric_blue[2] * final_intensity
+        ]
+        
+        # Clamp final
+        final_color = [max(0.0, min(1.0, c)) for c in final_color]
+        
+        return final_color
+        
+    except Exception as e:
+        print(f"Error en electricFragmentShader: {e}")
+        return [0.1, 0.5, 1.0]  # Azul eléctrico por defecto
 
 

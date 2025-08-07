@@ -17,7 +17,7 @@ rend = Renderer(screen)
 # Crear y configurar cámara
 camera = Camera()
 camera.set_viewport(0, 0, width, height)
-camera.set_position(0, 0, 10)     # Cámara alejada del origen
+camera.set_position(0, 0, 8)     # Cámara alejada del origen
 camera.set_target(0, 0, 0)       # Mirando al centro
 camera.set_projection(45, width/height, 0.1, 50.0)
 
@@ -27,9 +27,9 @@ rend.set_camera(camera)
 # Cargar modelo desde archivo .obj
 objModel = Model()
 objModel.load_obj("centauro.obj")  # Cambiar a modelo más simple
-objModel.scale_to_fit(2.0)  # Auto-escalar y centrar
+objModel.scale_to_fit(4.0)  # Auto-escalar y centrar
 
-objModel.load_texture("texturas.bmp")  # Cargar textura
+objModel.load_texture("texura.bmp")  # Cargar textura
 
 # Calcular iluminación
 objModel.calculate_lighting_colors()
@@ -82,7 +82,7 @@ while isRunning:
                     objModel.texture = None
                     
                 else:
-                    objModel.load_texture("texturas.bmp")  
+                    objModel.load_texture("lava.bmp")  
                     
             elif event.key == pygame.K_p:
                 # Modo photoshoot automático
@@ -131,69 +131,57 @@ while isRunning:
             elif event.key == pygame.K_l:
                 # Recalcular iluminación
                 objModel.calculate_lighting_colors()
+            
+            
+            elif event.key == pygame.K_f:
                 
-            # elif event.key == pygame.K_f:
-            #     # Toggle entre colores con iluminación y colores aleatorios
-            #     if hasattr(objModel, 'original_colors'):
-            #         # Intercambiar colores
-            #         temp = objModel.colors
-            #         objModel.colors = objModel.original_colors
-            #         objModel.original_colors = temp
-                    
-            #     else:
-            #         # Guardar colores actuales como originales
-            #         objModel.original_colors = objModel.colors.copy()
-            #         # Crear colores aleatorios
-            #         import random
-            #         objModel.colors = []
-            #         for _ in objModel.faces:
-            #             r = random.random()
-            #             g = random.random() 
-            #             b = random.random()
-            #             objModel.colors.append([r, g, b])
-                    
-            # elif event.key == pygame.K_g:
-            #     # Modo solo texturas (sin iluminación)
-            #     if objModel.texture:
-            #         objModel.colors = []
-            #         for i in range(len(objModel.faces)):
-            #             # Usar colores directos de la textura sin modificar
-            #             if i < len(objModel.face_uvs):
-            #                 uv_indices = objModel.face_uvs[i]
-            #                 if len(uv_indices) >= 3:
-            #                     # Obtener color del centro de la cara
-            #                     uv_a = objModel.texture_coords[uv_indices[0]] if uv_indices[0] < len(objModel.texture_coords) else [0.5, 0.5]
-            #                     uv_b = objModel.texture_coords[uv_indices[1]] if uv_indices[1] < len(objModel.texture_coords) else [0.5, 0.5]
-            #                     uv_c = objModel.texture_coords[uv_indices[2]] if uv_indices[2] < len(objModel.texture_coords) else [0.5, 0.5]
-                                
-            #                     # Centro del triángulo UV
-            #                     center_u = (uv_a[0] + uv_b[0] + uv_c[0]) / 3
-            #                     center_v = (uv_a[1] + uv_b[1] + uv_c[1]) / 3
-                                
-            #                     texture_color = objModel.get_texture_color(center_u, center_v)
-            #                     objModel.colors.append(texture_color)
-            #                 else:
-            #                     objModel.colors.append([0.7, 0.7, 0.7])
-            #             else:
-            #                 objModel.colors.append([0.7, 0.7, 0.7])
-                    
-            #     else:
-            #         print("No texture loaded for texture-only mode")
-                    
-            # elif event.key == pygame.K_h:
-            #     # Test de iluminación dramática
-            #     objModel.test_dramatic_lighting()
+                from shaders import resetToDefaultShaders, lightingVertexShader, fragmentShaderWithBarycentric
+                resetToDefaultShaders(objModel)  # Limpiar primero
+                
+                # Aplicar nuevos shaders
+                objModel.vertexShader = lightingVertexShader
+                objModel.fragmentShader = fragmentShaderWithBarycentric
+                print("Iluminación avanzada aplicada! (Vertex + Fragment)")
+                
             elif event.key == pygame.K_v:
-                from shaders import lavaVertexShader, lavaFragmentShader
+                
+                from shaders import resetToDefaultShaders, lavaVertexShader, lavaFragmentShader
+                resetToDefaultShaders(objModel)  # Limpiar primero
+                
+                
                 objModel.vertexShader = lavaVertexShader
                 objModel.fragmentShader = lavaFragmentShader
                 print("Shader de lava aplicado! El modelo ahora parece lava derretida")
                 
+            elif event.key == pygame.K_b:
+                # DEBUG: Verificar que las funciones existen
+                try:
+                    from shaders import resetToDefaultShaders, hologramShader, hologramFragmentShader
+                    print("✓ Shaders importados correctamente")
+                    
+                    resetToDefaultShaders(objModel)
+                    print("✓ Reset completado")
+                    
+                    objModel.texture = None
+                    objModel.vertexShader = hologramShader
+                    objModel.fragmentShader = hologramFragmentShader
+                    
+                    print("✓ Shaders asignados")
+                    print(f"Fragment shader es: {objModel.fragmentShader}")
+                    
+                except ImportError as e:
+                    print(f"ERROR: No se pueden importar shaders: {e}")
+                except Exception as e:
+                    print(f"ERROR: {e}")
+                
             elif event.key == pygame.K_0:
-                # Modo básico: solo colores sólidos sin texturas ni lighting
-                objModel.texture = None  # Remover textura
+                # MODO BÁSICO: LIMPIAR TODO
+                from shaders import resetToDefaultShaders
+                resetToDefaultShaders(objModel)  # Limpiar shaders
+                
+                # Remover textura y crear colores simples
+                objModel.texture = None
                 objModel.colors = []
-                # Crear colores simples muy obvios
                 for i in range(len(objModel.faces)):
                     if i % 4 == 0:
                         objModel.colors.append([1.0, 0.0, 0.0])  # Rojo
@@ -203,12 +191,23 @@ while isRunning:
                         objModel.colors.append([0.0, 0.0, 1.0])  # Azul
                     else:
                         objModel.colors.append([1.0, 1.0, 0.0])  # Amarillo
-            elif event.key == pygame.K_b:
-                objModel.apply_hologram_effect()
-                print("shader aplicado, presiona N para animar")
-            elif event.key == pygame.K_n:
-                objModel.animate_hologram_effect(deltaTime)
-                print("animación holograma aplicada")  
+                print("Modo básico: colores sólidos sin shaders")
+                
+            elif event.key == pygame.K_m: 
+                try: 
+                    from shaders import resetToDefaultShaders, crystalVertexShader, crystalFragmentShader
+                    resetToDefaultShaders(objModel)  # Limpiar primero
+                    
+                    objModel.texture = None 
+                    objModel.vertexShader = crystalVertexShader
+                    objModel.fragmentShader = crystalFragmentShader
+                    print("Shader de cristal aplicado! El modelo ahora parece un cristal brillante")
+                except ImportError as e:
+                    print(f"ERROR: No se pueden importar shaders: {e}")
+                except Exception as e:
+                    print(f"ERROR: {e}")
+
+
 
     keys = pygame.key.get_pressed()
 

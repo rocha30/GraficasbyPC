@@ -310,7 +310,7 @@ class Model:
                 min(1.0, max(0.0, base_color[2] * light_color[2] * final_intensity))
             ]
             
-            self.colors.append(final_color)
+            self.original_lighting_colors = self.colors.copy()  # Guardar colores originales antes de aplicar iluminación
         
         # Debug: Mostrar algunos colores calculados
         print(f"Colores con iluminación mejorada calculados: {len(self.colors)} caras")
@@ -320,27 +320,7 @@ class Model:
                   f"G={sum(c[1] for c in self.colors[:10])/min(10, len(self.colors)):.3f}, "
                   f"B={sum(c[2] for c in self.colors[:10])/min(10, len(self.colors)):.3f}")
 
-    # def test_dramatic_lighting(self):
-    #     """Crear iluminación dramática para prueba"""
-    #     print("Aplicando iluminación dramática de prueba...")
-        
-    #     # Colores extremos para poder ver la diferencia
-    #     light_color = [1.0, 1.0, 0.8]  # Luz amarillenta
-    #     dark_color = [0.1, 0.1, 0.2]   # Azul muy oscuro
-        
-    #     self.colors = []
-        
-    #     for i, face in enumerate(self.faces):
-    #         # Alternar entre claro y oscuro basado en el índice
-    #         if i % 3 == 0:
-    #             self.colors.append(light_color.copy())
-    #         elif i % 3 == 1:
-    #             self.colors.append(dark_color.copy())
-    #         else:
-    #             self.colors.append([0.5, 0.5, 0.5])  # Gris medio
-        
-    #     print(f"Colores dramáticos aplicados: {len(self.colors)} caras")
-    #     print(f"Patrón: Claro({light_color}) -> Oscuro({dark_color}) -> Gris")
+
 
     def scale_to_fit(self, target_size=2.0):
         """Escalar modelo para que quepa en un cubo de tamaño target_size centrado en origen"""
@@ -429,12 +409,13 @@ class Model:
     def apply_hologram_effect(self):
         """Aplicar efecto de holograma al modelo"""
         print("Aplicando efecto de holograma...")
+        self.texture = None  
         
         # Generar colores holográficos para cada cara
         self.colors = []
         import time
         import math
-        
+        from shaders import hologramShader, hologramFragmentShader
         time_factor = time.time()
         
         for i, face in enumerate(self.faces):
@@ -462,9 +443,12 @@ class Model:
                 min(1.0, color[1] * scan_effect), 
                 min(1.0, color[2] * scan_effect)
             ]
-            
+
             self.colors.append(final_color)
-        
+
+            self.vertexShader = hologramShader
+            self.fragmentShader = hologramFragmentShader
+
         print(f"Efecto holográfico aplicado a {len(self.faces)} caras")
 
     def animate_hologram(self):

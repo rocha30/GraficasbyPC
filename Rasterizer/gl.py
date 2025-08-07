@@ -133,6 +133,7 @@ class Renderer(object):
         # Triángulo con z-buffer y texturas usando coordenadas baricéntricas
         # A, B, C deben tener formato [x, y, z]
         
+        color = self.currColor
         # Asegurar que tenemos coordenadas z
         if len(A) < 3: A = [A[0], A[1], 0]
         if len(B) < 3: B = [B[0], B[1], 0]
@@ -189,31 +190,42 @@ class Renderer(object):
                     color = self.currColor
                     
                     # Si hay textura Y colores de lighting, combinarlos
-                    if uv_a and uv_b and uv_c and model and hasattr(model, 'colors') and face_idx is not None and face_idx < len(model.colors):
-                        u = alpha * uv_a[0] + beta * uv_b[0] + gamma * uv_c[0]
-                        v = alpha * uv_a[1] + beta * uv_b[1] + gamma * uv_c[1]
-                        texture_color = model.get_texture_color(u, v)
-                        lighting_color = model.colors[face_idx]
+                    if model and hasattr(model, 'fragmentShader') and model.fragmentShader:
+                        try:
+                            color = model.fragmentShader(A, B, C, alpha, beta, gamma, 
+                                                        model=model, face_idx=face_idx)
+                        except Exception as e:
+                            print(f"Error en fragment shader: {e}")
+                            color = [1.0, 0.0, 0.0]  # Rojo para debug
+                    
+                    else:
+                        # Si hay textura Y colores de lighting, combinarlos
+                        if uv_a and uv_b and uv_c and model and hasattr(model, 'colors') and face_idx is not None and face_idx < len(model.colors):
+                            u = alpha * uv_a[0] + beta * uv_b[0] + gamma * uv_c[0]
+                            v = alpha * uv_a[1] + beta * uv_b[1] + gamma * uv_c[1]
+                            texture_color = model.get_texture_color(u, v)
+                            lighting_color = model.colors[face_idx]
+                            
+                            # Multiplicar textura por lighting (ambos en rango 0-1)
+                            color = [
+                                texture_color[0] * lighting_color[0],
+                                texture_color[1] * lighting_color[1], 
+                                texture_color[2] * lighting_color[2]
+                            ]
                         
-                        # Multiplicar textura por lighting (ambos en rango 0-1)
-                        color = [
-                            texture_color[0] * lighting_color[0],
-                            texture_color[1] * lighting_color[1], 
-                            texture_color[2] * lighting_color[2]
-                        ]
-                    
-                    # Si solo hay textura (sin lighting)
-                    elif uv_a and uv_b and uv_c and model:
-                        u = alpha * uv_a[0] + beta * uv_b[0] + gamma * uv_c[0]
-                        v = alpha * uv_a[1] + beta * uv_b[1] + gamma * uv_c[1]
-                        texture_color = model.get_texture_color(u, v)
-                        color = texture_color
-                    
-                    # Si solo hay lighting (sin textura)
-                    elif hasattr(model, 'colors') and face_idx is not None and face_idx < len(model.colors):
-                        color = model.colors[face_idx]
+                        # Si solo hay textura (sin lighting)
+                        elif uv_a and uv_b and uv_c and model:
+                            u = alpha * uv_a[0] + beta * uv_b[0] + gamma * uv_c[0]
+                            v = alpha * uv_a[1] + beta * uv_b[1] + gamma * uv_c[1]
+                            texture_color = model.get_texture_color(u, v)
+                            color = texture_color
+                        
+                        # Si solo hay lighting (sin textura)
+                        elif hasattr(model, 'colors') and face_idx is not None and face_idx < len(model.colors):
+                            color = model.colors[face_idx]
                     
                     self.glPoint(x, y, color, z)
+                   
 
     def glRender(self):
         for model in self.models:

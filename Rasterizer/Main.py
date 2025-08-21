@@ -45,7 +45,7 @@ objModel1.load_obj(f"{MODELS_PATH}/DarthVader.obj")
 objModel1.scale_to_fit(2.2)  
 objModel1.load_texture(f"{TEXTURES_PATH}/Darth.bmp")
 objModel1.calculate_lighting_colors()
-objModel1.translation = [-3, -0.9, -0.3]  
+objModel1.translation = [3, -0.5, -2]  
 objModel1.vertexShader = electricVertexShader
 objModel1.fragmentShader = electricFragmentShader
 rend.models.append(objModel1)
@@ -53,26 +53,27 @@ rend.models.append(objModel1)
 #solo
 objModel2 = Model()
 objModel2.load_obj(f"{MODELS_PATH}/Solo.obj")
-objModel2.scale_to_fit(1.2) 
+objModel2.scale_to_fit(2.2) 
 objModel2.load_texture(f"{TEXTURES_PATH}/solo.bmp")
 objModel2.load_texture(f"{TEXTURES_PATH}/soloc.bmp")
 objModel2.calculate_lighting_colors()
-objModel2.translation = [5, -0.9, 2]  
-objModel2.vertexShader = lavaVertexShader
+objModel2.translation = [3, -0.9, 2]  
+objModel2.vertexShader = lavaVertexShader 
 objModel2.fragmentShader = lavaFragmentShader
 objModel2.rotation = [0, 180, 0]
 rend.models.append(objModel2)
 
-#pinguino
+#Chewbacca
 objModel3 = Model()
 objModel3.load_obj(f"{MODELS_PATH}/Chewbacca.obj")
-objModel3.scale_to_fit(1.0)
+objModel3.scale_to_fit(2)
 objModel3.load_texture(f"{TEXTURES_PATH}/Chewbaca.bmp")
 objModel3.load_texture(f"{TEXTURES_PATH}/Chebacao.bmp")
 objModel3.calculate_lighting_colors()
-objModel3.translation = [1, 0, 0]
+objModel3.translation = [3, 0, 1]
 objModel3.vertexShader = crystalVertexShader
 objModel3.fragmentShader = crystalFragmentShader
+objModel3.rotation = [0, 150, 0]
 
 # Fix: Forzar colores si no se generaron
 if len(objModel3.colors) == 0 and len(objModel3.faces) > 0:
@@ -84,25 +85,27 @@ rend.models.append(objModel3)
 #Anaki
 objModel4 = Model()
 objModel4.load_obj(f"{MODELS_PATH}/Anakin.obj")
-objModel4.scale_to_fit(1.8)
+objModel4.scale_to_fit(2)
 objModel4.load_texture(f"{TEXTURES_PATH}/Aface.bmp")
 objModel4.load_texture(f"{TEXTURES_PATH}/Apelo.bmp")
 objModel4.load_texture(f"{TEXTURES_PATH}/Aropa.bmp")
 objModel4.calculate_lighting_colors()
-objModel4.translation = [0, -1.5, -4]
-objModel4.vertexShader = hologramShader
-objModel4.fragmentShader = hologramFragmentShader
+objModel4.translation = [7.5, -1.5, -1.5]
+objModel4.vertexShader = lavaVertexShader
+objModel4.fragmentShader = lavaFragmentShader
+objModel4.rotation = [0, -15, 0]
 rend.models.append(objModel4)
 
 # Yoda
 objModel5 = Model()
 objModel5.load_obj(f"{MODELS_PATH}/YodaGhost.obj")
-objModel5.scale_to_fit(1.8)
+objModel5.scale_to_fit(2)
 objModel5.load_texture(f"{TEXTURES_PATH}/Yoda.bmp")
 objModel5.calculate_lighting_colors()
-objModel5.translation = [1, 2, 4]
+objModel5.translation = [1, 3, 7]
 objModel5.vertexShader = hologramShader
 objModel5.fragmentShader = hologramFragmentShader
+objModel5.rotation = [0, -60, 0]
 rend.models.append(objModel5)
 
 # Lista de modelos para controles

@@ -1,7 +1,8 @@
 import random
 import numpy as np
 from PIL import Image
-from MathLib import *
+from Math.MathLib import *
+
 import time
 import math
 
@@ -415,7 +416,7 @@ class Model:
         self.colors = []
         import time
         import math
-        from shaders import hologramShader, hologramFragmentShader
+        from Shaders.shaders import hologramShader, hologramFragmentShader
         time_factor = time.time()
         
         for i, face in enumerate(self.faces):
@@ -495,3 +496,4 @@ class Model:
                     base_color[1] * brightness,
                     base_color[2] * brightness
                 ]
+    

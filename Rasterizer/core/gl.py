@@ -228,6 +228,19 @@ class Renderer(object):
                    
 
     def glRender(self):
+        # Solo limpiar si no tenemos un fondo activo
+        if not hasattr(self, 'has_background_active') or not self.has_background_active:
+            color = [int(i * 255) for i in self.clearColor]
+            self.screen.fill(color)
+            self.frameBuffer = [[color for y in range(self.height)]  
+                               for x in range(self.width)]            
+            self.zBuffer = [[float('inf') for y in range(self.height)]
+                           for x in range(self.width)]
+        else: 
+            # Solo limpiar z-buffer, mantener la pantalla intacta
+            self.zBuffer = [[float('inf') for y in range(self.height)]  
+                           for x in range(self.width)]                  
+
         for model in self.models:
             # Por cada modelo en la lista, los dibujo
             # Agarrar su matriz modelo y vertexshader
@@ -264,7 +277,7 @@ class Renderer(object):
                     vertexBuffer.append(x)
                     vertexBuffer.append(y)
                     vertexBuffer.append(z)
-
+                    
                 self.glDrawPrimitives(vertexBuffer, 3)
 
     def render_with_faces(self, model, vertexBuffer):
@@ -372,6 +385,8 @@ class Renderer(object):
                 C = [ buffer[i + j + vertexOffset * 2] for j in range(vertexOffset) ]
 
                 self.glTriangle(A,B,C)
+                
+                
                 
                 
     def glRenderZBuffer(self):

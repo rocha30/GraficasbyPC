@@ -1,5 +1,5 @@
 import numpy as np 
-from MathLib import * 
+from Math.MathLib import * 
 
 class Camera:
     def __init__(self):

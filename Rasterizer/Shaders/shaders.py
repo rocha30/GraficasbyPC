@@ -272,9 +272,9 @@ def hologramFragmentShader(vertex_a, vertex_b, vertex_c, u, v, w, **kwargs):
     color_wave3 = (time_factor * 0.3 + spatial_factor3) % 1.0
     
     # CALCULAR COMPONENTES RGB usando las ondas
-    red_component = 0.3 + 0.7 * math.sin(color_wave1 * 6.28)      # 0.3 a 1.0
-    green_component = 0.3 + 0.7 * math.cos(color_wave2 * 6.28)    # 0.3 a 1.0  
-    blue_component = 0.3 + 0.7 * math.sin(color_wave3 * 6.28 + 2.1)  # 0.3 a 1.0 con offset
+    red_component = 0.1 + 0.2 * math.sin(color_wave1 * 6.28)      # 0.3 a 1.0 
+    green_component = 0.5 + 0.5 * math.cos(color_wave2 * 6.28)    # 0.3 a 1.0  
+    blue_component = 0.7 + 0.3 * math.sin(color_wave3 * 6.28 + 2.1)  # 0.3 a 1.0 con offset
     
     # NORMALIZAR para evitar colores demasiado oscuros
     total = red_component + green_component + blue_component
